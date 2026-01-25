@@ -1,7 +1,8 @@
 import { client } from "@/libs/client";
 import Image from "next/image";
+import Link from "next/link";
 
-// microCMSから記事データを取得する関数
+// microCMSから記事データを取得
 async function getBlogData(id: string) {
   const data = await client.get({
     endpoint: "blogs",
@@ -10,14 +11,13 @@ async function getBlogData(id: string) {
   return data;
 }
 
-// 記事詳細ページの構築
 export default async function BlogPage({ params }: { params: { id: string } }) {
   const blog = await getBlogData(params.id);
 
   return (
     <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white relative overflow-hidden">
       
-      {/* 背景：論理的なグリッドシステム（不透明度を下げてノイズにならないように配置） */}
+      {/* 背景：共通グリッド */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]"
            style={{
              backgroundImage: 'linear-gradient(#000 1px, transparent 1px), linear-gradient(90deg, #000 1px, transparent 1px)',
@@ -25,23 +25,19 @@ export default async function BlogPage({ params }: { params: { id: string } }) {
            }}>
       </div>
 
-      {/* メインコンテンツエリア */}
       <div className="relative z-10 max-w-3xl mx-auto border-l border-r border-black min-h-screen bg-white/90 backdrop-blur-sm">
         
         {/* ヘッダーセクション */}
         <header className="border-b border-black p-8 md:p-12">
+          {/* ナビゲーション（HOMEへ戻る） */}
           <div className="flex justify-between items-start mb-10">
-            {/* アイコン：Axisの視覚的アンカー */}
-            <div className="relative w-16 h-16 border border-black bg-white">
-              <Image 
-                src="/icon.png" 
-                alt="New Logos Icon" 
-                fill 
-                className="object-cover p-1"
-              />
-            </div>
+            <Link href="/" className="group">
+                <div className="relative w-16 h-16 border border-black bg-white transition-transform group-hover:scale-95">
+                <Image src="/icon.png" alt="New Logos Icon" fill className="object-cover p-1" />
+                </div>
+                <span className="text-[10px] uppercase tracking-widest mt-2 block opacity-0 group-hover:opacity-100 transition-opacity">Back to Home</span>
+            </Link>
             
-            {/* メタ情報：幾何学的配置 */}
             <div className="text-right text-[10px] font-mono leading-relaxed opacity-70">
               ID: {blog.id}<br/>
               PUBLISHED: {new Date(blog.publishedAt).toLocaleDateString()}
@@ -57,16 +53,16 @@ export default async function BlogPage({ params }: { params: { id: string } }) {
           </div>
         </header>
 
-        {/* 記事本文エリア */}
+        {/* 記事本文 */}
         <main className="p-8 md:p-12 prose prose-neutral max-w-none text-justify leading-loose"
               dangerouslySetInnerHTML={{ __html: blog.content }}>
         </main>
 
-        {/* フッター：著者情報と理念 */}
+        {/* フッター：著者情報とコンタクト */}
         <footer className="border-t border-black p-8 md:p-12 bg-black text-white">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             
-            {/* 左側：Author & Philosophy */}
+            {/* 左側：Author Profile */}
             <div>
               <h2 className="text-sm font-bold uppercase tracking-[0.3em] mb-4 border-b border-white/30 pb-2 inline-block">
                 Author: Axis
