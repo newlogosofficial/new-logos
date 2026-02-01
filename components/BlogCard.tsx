@@ -1,16 +1,13 @@
 import Link from 'next/link';
-import Image from 'next/image';
 
-type Category = {
-  id: string;
-  name: string;
-};
+// カテゴリは「文字(string)」か「オブジェクト」のどちらか
+type Category = string | { id: string; name: string };
 
 type Blog = {
   id: string;
   title: string;
   publishedAt: string;
-  category: Category[]; // 配列として受け取る
+  category: Category[]; // どちらが来てもOKにする
   eyecatch?: {
     url: string;
     height: number;
@@ -19,7 +16,6 @@ type Blog = {
 };
 
 export default function BlogCard({ blog }: { blog: Blog }) {
-  // 日付のフォーマット (例: 2026.02.01)
   const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -30,7 +26,7 @@ export default function BlogCard({ blog }: { blog: Blog }) {
     <Link href={`/blogs/${blog.id}`} className="block group">
       <article className="flex flex-col md:flex-row gap-6 items-start border-b border-gray-200 pb-6 mb-6">
         
-        {/* アイキャッチ画像エリア */}
+        {/* アイキャッチ画像 */}
         <div className="w-full md:w-1/3 aspect-video bg-gray-100 overflow-hidden border border-black relative">
           {blog.eyecatch ? (
             <img
@@ -49,14 +45,20 @@ export default function BlogCard({ blog }: { blog: Blog }) {
         <div className="flex-1 w-full">
           <div className="flex justify-between items-start mb-2">
             
-            {/* ■ ここが修正ポイント：実際のカテゴリを表示 */}
+            {/* カテゴリ表示エリア */}
             <div className="flex flex-wrap gap-2">
               {blog.category && blog.category.length > 0 ? (
-                blog.category.map((cat) => (
-                  <span key={cat.id} className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
-                    {cat.name}
-                  </span>
-                ))
+                blog.category.map((cat, index) => {
+                  // 文字列ならそのまま、オブジェクトなら.nameを使う
+                  const catName = typeof cat === 'string' ? cat : cat.name;
+
+                  return (
+                    <span key={index} className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                      {/* 変換せずそのまま日本語を表示 */}
+                      {catName}
+                    </span>
+                  );
+                })
               ) : (
                 <span className="bg-gray-200 text-gray-500 text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
                   UNCATEGORIZED
