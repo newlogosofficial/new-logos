@@ -9,20 +9,11 @@ const notoSansJP = Noto_Sans_JP({
   weight: ["400", "700", "900"],
 });
 
-/* ▼ ここでタイトルとアイコンを設定します ▼ */
+/* タイトル設定等はそのまま... */
 export const metadata: Metadata = {
-  // タイトルの設定（%s は各ページで設定したタイトルが入る場所）
-  title: {
-    template: '%s | NEW LOGOS', 
-    default: 'NEW LOGOS', // ページごとの設定がない場合に表示されるタイトル
-  },
+  title: { template: '%s | NEW LOGOS', default: 'NEW LOGOS' },
   description: "Logic / Structure / Possibility",
-  // アイコンの設定
-  icons: {
-    icon: '/icon.png', // publicフォルダにあるicon.pngを指定
-    shortcut: '/icon.png',
-    apple: '/icon.png', // iPhoneなどのホーム画面用
-  },
+  icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/icon.png' },
 };
 
 export default function RootLayout({
@@ -32,15 +23,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      {/* ... (bodyの中身は変更なし) ... */}
-      <body className={`${notoSansJP.className} bg-white text-black antialiased selection:bg-black selection:text-white flex flex-col min-h-screen`}>
+      {/* bodyに bg-grid-pattern クラスを追加 */}
+      <body className={`${notoSansJP.className} bg-grid-pattern text-black antialiased selection:bg-black selection:text-white flex flex-col min-h-screen`}>
+        
         <Header />
+
         <div className="flex-grow w-full pt-20 pb-12">
-           <main className="w-full max-w-3xl mx-auto px-6 shadow-[0_0_50px_rgba(0,0,0,0.03)] min-h-[80vh] bg-white">
+           {/* メインエリアは「白背景」にして影をつけることで、背景から浮かび上がらせる */}
+           <main className="w-full max-w-3xl mx-auto px-6 shadow-[0_0_50px_rgba(0,0,0,0.05)] min-h-[80vh] bg-white border-x border-gray-100">
             {children}
            </main>
         </div>
+
         <Footer />
+        
       </body>
     </html>
   );

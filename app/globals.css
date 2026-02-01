@@ -39,3 +39,12 @@ body {
   opacity: 1;
   transform: translateY(0);
 }
+
+/* 幾何学的なグリッド背景 */
+.bg-grid-pattern {
+  background-color: #f9f9f9; /* ベースの色 */
+  background-image: 
+    linear-gradient(#e5e5e5 1px, transparent 1px),
+    linear-gradient(90deg, #e5e5e5 1px, transparent 1px);
+  background-size: 40px 40px; /* マスの大きさ */
+}
