@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image'; // 画像表示用
 import { client } from '@/libs/client';
 
-// microCMSの記事型定義（実データに合わせて修正）
+// 型定義
 type Category = {
   id: string;
   name: string;
@@ -12,30 +13,47 @@ type Blog = {
   title: string;
   publishedAt: string;
   eyecatch?: { url: string };
-  category?: Category[]; // 配列に変更
+  category?: Category[];
+  likes?: number; // いいね数も型に追加
 };
 
-// データの再検証（60秒ごとに更新）
+// データの再検証（60秒更新）
 export const revalidate = 60;
 
 export default async function Home() {
-  // 最新記事を3件取得
-  const { contents: latestBlogs } = await client.get({ 
-    endpoint: 'blogs', 
-    queries: { limit: 3 } 
-  });
+  // ■ 修正ポイント：最新記事と人気記事を同時に取得する（高速化）
+  const [latestData, popularData] = await Promise.all([
+    // 最新順 (limit: 3)
+    client.get({ 
+      endpoint: 'blogs', 
+      queries: { limit: 3, orders: '-publishedAt' } 
+    }),
+    // ■ 修正ポイント：いいね数順 (orders: '-likes', limit: 3)
+    client.get({ 
+      endpoint: 'blogs', 
+      queries: { limit: 3, orders: '-likes' } 
+    })
+  ]);
 
-  // ※NewLike人気記事はSupabase実装後に結合しますが、今は仮で最新を表示します
-  const popularBlogs = latestBlogs; 
+  const latestBlogs: Blog[] = latestData.contents;
+  const popularBlogs: Blog[] = popularData.contents;
 
   return (
     <main className="w-full">
       
-      {/* ヒーローセクション（幾何学・モノトーン） */}
+      {/* ヒーローセクション */}
       <section className="py-24 px-6 text-center flex flex-col items-center">
-        {/* アイコン */}
-        <div className="w-24 h-24 border border-black mb-8 flex items-center justify-center p-2">
-           <span className="font-black text-4xl tracking-tighter">NL</span> 
+        
+        {/* ■ 修正ポイント：アイコン画像を表示 */}
+        {/* publicフォルダに icon.png を置いてください */}
+        <div className="mb-8 w-24 h-24 relative">
+           <Image 
+             src="/icon.png" 
+             alt="NewLogos Icon" 
+             fill
+             className="object-contain"
+             priority
+           />
         </div>
 
         <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-4">NEW LOGOS</h1>
@@ -47,20 +65,25 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* 黒帯リンクエリア（SNS） */}
+      {/* ■ 修正ポイント：SNSリンク（4列に変更してInstagram追加） */}
       <section className="bg-black text-white py-16 px-6">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <a href="https://www.youtube.com/@NewLogos" target="_blank" className="group">
             <p className="text-xs font-mono text-gray-400 mb-2">VIDEO</p>
-            <h3 className="text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">YouTube</h3>
+            <h3 className="text-xl md:text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">YouTube</h3>
           </a>
           <a href="https://x.com/NewLogos_Axis" target="_blank" className="group">
             <p className="text-xs font-mono text-gray-400 mb-2">DIALOGUE</p>
-            <h3 className="text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">X (Twitter)</h3>
+            <h3 className="text-xl md:text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">X (Twitter)</h3>
           </a>
           <a href="https://www.tiktok.com/@newlogos_axis" target="_blank" className="group">
             <p className="text-xs font-mono text-gray-400 mb-2">SHORTS</p>
-            <h3 className="text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">TikTok</h3>
+            <h3 className="text-xl md:text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">TikTok</h3>
+          </a>
+          {/* 追加：Instagram */}
+          <a href="https://www.instagram.com/newlogos_axis" target="_blank" className="group">
+            <p className="text-xs font-mono text-gray-400 mb-2">VISUAL</p>
+            <h3 className="text-xl md:text-2xl font-bold group-hover:underline underline-offset-4 decoration-1">Instagram</h3>
           </a>
         </div>
       </section>
@@ -73,9 +96,13 @@ export default async function Home() {
         </div>
 
         <div className="space-y-6">
-          {latestBlogs.map((blog: Blog) => (
-            <HomeBlogCard key={blog.id} blog={blog} />
-          ))}
+          {latestBlogs.length > 0 ? (
+            latestBlogs.map((blog) => (
+              <HomeBlogCard key={blog.id} blog={blog} type="latest" />
+            ))
+          ) : (
+            <p className="text-center font-mono text-gray-400 text-xs py-10">NO DATA YET.</p>
+          )}
         </div>
 
         <div className="mt-12 text-center">
@@ -85,7 +112,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* POPULAR LOGIC (人気記事) */}
+      {/* POPULAR LOGIC (人気記事：いいね順) */}
       <section className="max-w-4xl mx-auto px-6 py-20 bg-gray-50">
         <div className="flex items-end justify-between border-b border-black pb-2 mb-12">
           <h2 className="text-sm font-bold tracking-widest">POPULAR LOGIC</h2>
@@ -93,14 +120,19 @@ export default async function Home() {
         </div>
 
         <div className="space-y-6">
-          {popularBlogs.map((blog: Blog) => (
-             <HomeBlogCard key={blog.id} blog={blog} />
-          ))}
+          {popularBlogs.length > 0 ? (
+             popularBlogs.map((blog) => (
+               <HomeBlogCard key={blog.id} blog={blog} type="popular" />
+             ))
+          ) : (
+             <p className="text-center font-mono text-gray-400 text-xs py-10">NO LIKES YET.</p>
+          )}
         </div>
 
         <div className="mt-12 text-center">
-          <Link href="/blogs?sort=popular" className="inline-block border border-black px-12 py-3 text-xs font-bold hover:bg-black hover:text-white transition-all">
-            VIEW ALL (POPULAR)
+          {/* 人気順ソートへのリンクがあれば理想的ですが、今は一覧へ */}
+          <Link href="/blogs" className="inline-block border border-black px-12 py-3 text-xs font-bold hover:bg-black hover:text-white transition-all">
+            VIEW ALL
           </Link>
         </div>
       </section>
@@ -109,14 +141,12 @@ export default async function Home() {
   );
 }
 
-// 記事カードコンポーネント（このページ専用のデザイン）
-function HomeBlogCard({ blog }: { blog: Blog }) {
-  // カテゴリが配列で来るので、最初の1つを取り出す
+// 記事カードコンポーネント
+function HomeBlogCard({ blog, type }: { blog: Blog; type: 'latest' | 'popular' }) {
   const categoryName = blog.category && blog.category.length > 0 
     ? blog.category[0].name 
     : 'LOGIC';
 
-  // 日付フォーマット
   const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -124,7 +154,6 @@ function HomeBlogCard({ blog }: { blog: Blog }) {
   }).replace(/\//g, '.');
 
   return (
-    // リンク先を /blogs/ に修正
     <Link href={`/blogs/${blog.id}`} className="block group">
       <article className="border border-black p-0 flex flex-col md:flex-row h-auto md:h-32 transition-all hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white">
         {/* 左側の画像エリア */}
@@ -133,6 +162,12 @@ function HomeBlogCard({ blog }: { blog: Blog }) {
              <img src={blog.eyecatch.url} alt="" className="w-full h-full object-cover" />
            ) : (
              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-mono">NO IMG</div>
+           )}
+           {/* 人気記事の場合はランクバッジ風の装飾をつけるのもアリ */}
+           {type === 'popular' && (
+             <div className="absolute top-0 left-0 bg-black text-white text-[10px] font-bold px-2 py-1">
+               POPULAR
+             </div>
            )}
         </div>
         
@@ -147,7 +182,10 @@ function HomeBlogCard({ blog }: { blog: Blog }) {
           
           <div className="flex items-end justify-between mt-2">
             <time className="text-xs font-mono text-gray-500">{date}</time>
-            <span className="text-xs font-mono">◇ --</span> 
+            {/* いいね数を表示 */}
+            <span className="text-xs font-mono font-bold">
+              ♥ {blog.likes || 0}
+            </span> 
           </div>
         </div>
       </article>
