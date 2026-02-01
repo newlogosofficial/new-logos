@@ -29,7 +29,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* 管理人プロフィール（完全匿名・概念のみ） */}
+      {/* 管理人プロフィール（修正箇所） */}
       <section className="mb-20">
         <h2 className="text-sm font-bold border-l-4 border-black pl-4 mb-6 tracking-widest">
           02. ADMINISTRATOR
@@ -46,16 +46,15 @@ export default function AboutPage() {
             
             <div className="space-y-4 text-sm leading-relaxed font-medium">
               <p>
-                詳細不明。<br/>
-                ただ、論理（ロゴス）のみを発信する観測者。
+                詳細は明かしません。<br/>
+                ただ、考えのみを発信する観測者です。
               </p>
               <p>
-                ここに個人の属性は存在しない。<br/>
-                あるのは、出力された言葉と、再構築された構造のみである。
+                あるのは出力された言葉と、閲覧者の可能性だけです。
               </p>
             </div>
 
-            {/* キーワードタグ（固有名詞を排除） */}
+            {/* キーワードタグ */}
             <div className="flex flex-wrap gap-2 mt-6">
               {['Logic', 'Structure', 'Philosophy', 'Abstraction', 'Observer'].map((tag) => (
                 <span key={tag} className="text-[10px] border border-gray-300 px-2 py-1 text-gray-500">
