@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { client } from '@/libs/client';
+import * as cheerio from 'cheerio';
 
-// キャッシュを強制的に無効化（常に最新のデータをmicroCMSに取りに行く設定）
+// キャッシュを無効化（常に最新の修正を反映させるため）
 export const revalidate = 0;
 
 export default async function BlogIdPage({
@@ -14,30 +15,26 @@ export default async function BlogIdPage({
 
   let blog;
   try {
-    // 常に最新データを取得
     blog = await client.get({ 
       endpoint: 'blogs', 
       contentId: id,
-      // キャッシュを使わない設定念押し
       queries: { draftKey: undefined } 
     });
   } catch (e) {
     notFound();
   }
 
-  // bodyがない場合のデバッグ用
-  if (!blog.body) {
-    return (
-      <div className="p-10 font-mono text-red-600">
-        <h1 className="text-xl font-bold mb-4">Display Error</h1>
-        <p>field "body" is empty or undefined.</p>
-        <p className="mt-4 border-t pt-4">Received fields:</p>
-        <pre className="bg-gray-100 p-4 mt-2 text-sm text-black">
-          {JSON.stringify(blog, null, 2)}
-        </pre>
-      </div>
-    );
-  }
+  // ■ ここが修正ポイント：本文（body）を取得し、見出しに「着地点（ID）」を自動でつける
+  const rawHtml = blog.body || blog.content; // 名前が違っても対応できるように
+
+  // HTMLを解析してIDを埋め込む
+  const $ = cheerio.load(rawHtml || '', null, false);
+  $('h2').each((_, elm) => {
+    const text = $(elm).text();
+    // 見出しの文字そのものをIDにする（例: id="01. はじめに"）
+    $(elm).attr('id', text); 
+  });
+  const processedContent = $.html();
 
   // 日付フォーマット
   const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
@@ -48,7 +45,6 @@ export default async function BlogIdPage({
 
   return (
     <div className="max-w-3xl mx-auto w-full">
-      {/* ヘッダー */}
       <header className="mb-12 border-b border-black pb-8">
         <div className="flex flex-wrap gap-2 mb-4">
           {blog.category && blog.category.map((cat: any) => (
@@ -63,18 +59,13 @@ export default async function BlogIdPage({
         <time className="text-xs font-mono text-gray-500">{date}</time>
       </header>
 
-      {/* アイキャッチ */}
       {blog.eyecatch && (
         <div className="mb-12">
-          <img 
-            src={blog.eyecatch.url} 
-            alt={blog.title} 
-            className="w-full h-auto border border-gray-200"
-          />
+          <img src={blog.eyecatch.url} alt={blog.title} className="w-full h-auto border border-gray-200"/>
         </div>
       )}
 
-      {/* 本文表示（加工なし・直球） */}
+      {/* 加工済みの本文（ID付き）を表示 */}
       <div 
         className="
           prose prose-sm md:prose-base max-w-none font-mono
@@ -83,10 +74,9 @@ export default async function BlogIdPage({
           prose-a:text-black prose-a:underline prose-a:decoration-1 prose-a:underline-offset-4 hover:prose-a:opacity-50
           prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic
         "
-        dangerouslySetInnerHTML={{ __html: blog.body }} 
+        dangerouslySetInnerHTML={{ __html: processedContent }} 
       />
 
-      {/* フッター */}
       <div className="mt-20 pt-10 border-t border-black flex justify-between items-center">
         <Link href="/blogs" className="text-xs font-bold font-mono border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors">
           &lt; BACK TO ARCHIVE
