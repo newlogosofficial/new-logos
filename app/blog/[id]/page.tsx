@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { client } from '@/libs/client';
 import * as cheerio from 'cheerio';
+// NewLikeButtonを読み込み
+import NewLike from '@/components/NewLikeButton'; 
 
-// キャッシュを無効化（常に最新の修正を反映させるため）
+// キャッシュ無効化
 export const revalidate = 0;
 
 export default async function BlogIdPage({
@@ -24,19 +26,15 @@ export default async function BlogIdPage({
     notFound();
   }
 
-  // ■ ここが修正ポイント：本文（body）を取得し、見出しに「着地点（ID）」を自動でつける
-  const rawHtml = blog.body || blog.content; // 名前が違っても対応できるように
-
-  // HTMLを解析してIDを埋め込む
+  // HTML解析とID付与
+  const rawHtml = blog.body || blog.content;
   const $ = cheerio.load(rawHtml || '', null, false);
   $('h2').each((_, elm) => {
     const text = $(elm).text();
-    // 見出しの文字そのものをIDにする（例: id="01. はじめに"）
-    $(elm).attr('id', text); 
+    $(elm).attr('id', text);
   });
   const processedContent = $.html();
 
-  // 日付フォーマット
   const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -65,7 +63,7 @@ export default async function BlogIdPage({
         </div>
       )}
 
-      {/* 加工済みの本文（ID付き）を表示 */}
+      {/* 本文 */}
       <div 
         className="
           prose prose-sm md:prose-base max-w-none font-mono
@@ -76,6 +74,11 @@ export default async function BlogIdPage({
         "
         dangerouslySetInnerHTML={{ __html: processedContent }} 
       />
+
+      {/* ★修正箇所：プロパティ名を blogId に変更 */}
+      <div className="mt-16 flex justify-center">
+        <NewLike blogId={id} />
+      </div>
 
       <div className="mt-20 pt-10 border-t border-black flex justify-between items-center">
         <Link href="/blogs" className="text-xs font-bold font-mono border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors">
