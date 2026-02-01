@@ -1,47 +1,79 @@
 import Link from 'next/link';
+import Image from 'next/image';
+
+type Category = {
+  id: string;
+  name: string;
+};
 
 type Blog = {
   id: string;
   title: string;
   publishedAt: string;
-  eyecatch?: { url: string };
-  category?: { name: string };
+  category: Category[]; // 配列として受け取る
+  eyecatch?: {
+    url: string;
+    height: number;
+    width: number;
+  };
 };
 
 export default function BlogCard({ blog }: { blog: Blog }) {
+  // 日付のフォーマット (例: 2026.02.01)
+  const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).replace(/\//g, '.');
+
   return (
-    <Link href={`/blog/${blog.id}`} className="block group">
-      <article className="border border-black bg-white flex flex-col md:flex-row h-auto md:h-36 transition-all duration-300 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1">
+    <Link href={`/blogs/${blog.id}`} className="block group">
+      <article className="flex flex-col md:flex-row gap-6 items-start border-b border-gray-200 pb-6 mb-6">
         
-        {/* 左：画像エリア */}
-        <div className="w-full md:w-56 shrink-0 bg-gray-100 relative overflow-hidden border-b md:border-b-0 md:border-r border-black">
+        {/* アイキャッチ画像エリア */}
+        <div className="w-full md:w-1/3 aspect-video bg-gray-100 overflow-hidden border border-black relative">
           {blog.eyecatch ? (
-            <img src={blog.eyecatch.url} alt="" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+            <img
+              src={blog.eyecatch.url}
+              alt={blog.title}
+              className="object-cover w-full h-full grayscale group-hover:grayscale-0 transition-all duration-500"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 font-mono text-xs">NO IMG</div>
+            <div className="w-full h-full flex items-center justify-center text-gray-400 font-mono text-xs">
+              NO IMAGE
+            </div>
           )}
         </div>
 
-        {/* 右：情報エリア */}
-        <div className="flex-1 p-4 flex flex-col justify-between">
-          <div>
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-mono bg-black text-white px-1.5 py-0.5">
-                {blog.category?.name || 'UNCATEGORIZED'}
-              </span>
-              <time className="text-xs font-mono text-gray-500">
-                {new Date(blog.publishedAt).toLocaleDateString()}
-              </time>
+        {/* テキストエリア */}
+        <div className="flex-1 w-full">
+          <div className="flex justify-between items-start mb-2">
+            
+            {/* ■ ここが修正ポイント：実際のカテゴリを表示 */}
+            <div className="flex flex-wrap gap-2">
+              {blog.category && blog.category.length > 0 ? (
+                blog.category.map((cat) => (
+                  <span key={cat.id} className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                    {cat.name}
+                  </span>
+                ))
+              ) : (
+                <span className="bg-gray-200 text-gray-500 text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                  UNCATEGORIZED
+                </span>
+              )}
             </div>
-            <h3 className="text-lg md:text-xl font-bold leading-tight group-hover:underline decoration-1 underline-offset-4">
-              {blog.title}
-            </h3>
+
+            <time className="text-xs font-mono text-gray-500">{date}</time>
           </div>
 
-          <div className="flex justify-end items-center mt-2">
-            <span className="text-xs font-mono border-b border-gray-300 pb-0.5 group-hover:border-black transition-colors">
-              READ LOGIC &rarr;
-            </span>
+          <h2 className="text-xl md:text-2xl font-black leading-tight mb-3 group-hover:underline decoration-2 underline-offset-4">
+            {blog.title}
+          </h2>
+          
+          <div className="flex items-center gap-2 text-xs font-bold font-mono group-hover:translate-x-1 transition-transform">
+            <span>READ LOGIC</span>
+            <span>&rarr;</span>
           </div>
         </div>
       </article>
