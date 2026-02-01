@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { client } from '@/libs/client';
 import BlogCard from '@/components/BlogCard';
 
-// Next.js 15対応: searchParamsをPromiseとして定義
 export default async function BlogsPage({
   searchParams,
 }: {
@@ -11,14 +10,12 @@ export default async function BlogsPage({
   // 1. パラメータを確定させる
   const { category, sort, page } = await searchParams;
   
-  // 2. カテゴリ一覧を取得（フィルタボタン用）
-  // ※もしmicroCMSにcategoriesAPIがない場合のエラー回避のためtry-catch
+  // 2. カテゴリ一覧を取得（ボタン表示用）
   let categories = [];
   try {
     const data = await client.get({ endpoint: 'categories' });
     categories = data.contents;
   } catch (e) {
-    // カテゴリAPIがない場合は空配列のまま進む
     console.log("No categories endpoint found or empty.");
   }
 
@@ -29,21 +26,22 @@ export default async function BlogsPage({
   const queries: any = { 
     limit,
     offset: (currentPage - 1) * limit,
-    orders: sort === 'oldest' ? 'publishedAt' : '-publishedAt', // 並べ替え
+    orders: sort === 'oldest' ? 'publishedAt' : '-publishedAt',
   };
   
-  // カテゴリ選択中ならフィルタリング
+  // ★修正箇所：複数選択に対応するため [contains] を使用
+  // これで「そのカテゴリを含んでいる記事」をすべて取得できます
   if (category) {
-    queries.filters = `category[equals]${category}`;
+    queries.filters = `category[contains]${category}`;
   }
   
   // 4. 記事取得
   const { contents, totalCount } = await client.get({ endpoint: 'blogs', queries });
   const totalPages = Math.ceil(totalCount / limit);
 
-  // 現在のカテゴリ名を取得（タイトル表示用）
+  // 現在のカテゴリ名（タイトル表示用）
   const currentCategoryName = categories.find((c: any) => c.id === category)?.name;
-  // 現在のソート状態（ボタンの色用）
+  // 現在のソート（ボタンの色用）
   const currentSort = sort || 'latest';
 
   return (
@@ -77,7 +75,7 @@ export default async function BlogsPage({
           </div>
         </div>
 
-        {/* カテゴリフィルタボタン（カテゴリがある場合のみ表示） */}
+        {/* カテゴリフィルタボタン */}
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-2">
             <Link 
