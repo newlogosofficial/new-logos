@@ -21,10 +21,9 @@ export default async function Home() {
 
   return (
     <div className="w-full">
-      {/* 起動アニメーション（初回のみ） */}
       <BootOpener />
 
-      {/* ヒーローセクション：ロゴとメインメッセージ */}
+      {/* ヒーローセクション */}
       <section className="py-16 md:py-24 text-center flex flex-col items-center">
         
         {/* 中央ロゴ：画像を表示 */}
@@ -41,20 +40,25 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* SNSリンク（黒帯） */}
+      {/* SNSリンク（Instagram追加済み） */}
       <section className="bg-black text-white py-12 -mx-6 px-6 shadow-inner">
-        <div className="max-w-xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        {/* grid-cols-4 にして4つ並ぶように調整 */}
+        <div className="max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           <a href="https://www.youtube.com/@NewLogos" target="_blank" className="group">
             <p className="text-[10px] font-mono text-gray-400 mb-1">VIDEO</p>
-            <h3 className="text-xl font-bold group-hover:underline underline-offset-4 decoration-1">YouTube</h3>
+            <h3 className="text-lg font-bold group-hover:underline underline-offset-4 decoration-1">YouTube</h3>
           </a>
           <a href="https://x.com/NewLogos_Axis" target="_blank" className="group">
             <p className="text-[10px] font-mono text-gray-400 mb-1">DIALOGUE</p>
-            <h3 className="text-xl font-bold group-hover:underline underline-offset-4 decoration-1">X (Twitter)</h3>
+            <h3 className="text-lg font-bold group-hover:underline underline-offset-4 decoration-1">X (Twitter)</h3>
           </a>
           <a href="https://www.tiktok.com/@newlogos_axis" target="_blank" className="group">
             <p className="text-[10px] font-mono text-gray-400 mb-1">SHORTS</p>
-            <h3 className="text-xl font-bold group-hover:underline underline-offset-4 decoration-1">TikTok</h3>
+            <h3 className="text-lg font-bold group-hover:underline underline-offset-4 decoration-1">TikTok</h3>
+          </a>
+          <a href="https://www.instagram.com/newlogos_axis" target="_blank" className="group">
+            <p className="text-[10px] font-mono text-gray-400 mb-1">VISUAL</p>
+            <h3 className="text-lg font-bold group-hover:underline underline-offset-4 decoration-1">Instagram</h3>
           </a>
         </div>
       </section>
