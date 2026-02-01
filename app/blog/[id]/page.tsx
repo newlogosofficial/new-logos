@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { client } from '@/libs/client';
-import * as cheerio from 'cheerio';
+
+// キャッシュを強制的に無効化（常に最新のデータをmicroCMSに取りに行く設定）
+export const revalidate = 0;
 
 export default async function BlogIdPage({
   params,
@@ -12,21 +14,30 @@ export default async function BlogIdPage({
 
   let blog;
   try {
-    blog = await client.get({ endpoint: 'blogs', contentId: id });
+    // 常に最新データを取得
+    blog = await client.get({ 
+      endpoint: 'blogs', 
+      contentId: id,
+      // キャッシュを使わない設定念押し
+      queries: { draftKey: undefined } 
+    });
   } catch (e) {
     notFound();
   }
 
-  // HTMLを取得
-  const rawHtml = blog.content || blog.body;
-
-  // HTMLを解析して、見出し(h2)にIDを自動付与する
-  const $ = cheerio.load(rawHtml || '', null, false);
-  $('h2').each((_, elm) => {
-    const text = $(elm).text();
-    $(elm).attr('id', text); // 見出しの文字をそのままIDにする
-  });
-  const processedContent = $.html();
+  // bodyがない場合のデバッグ用
+  if (!blog.body) {
+    return (
+      <div className="p-10 font-mono text-red-600">
+        <h1 className="text-xl font-bold mb-4">Display Error</h1>
+        <p>field "body" is empty or undefined.</p>
+        <p className="mt-4 border-t pt-4">Received fields:</p>
+        <pre className="bg-gray-100 p-4 mt-2 text-sm text-black">
+          {JSON.stringify(blog, null, 2)}
+        </pre>
+      </div>
+    );
+  }
 
   // 日付フォーマット
   const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
@@ -63,17 +74,16 @@ export default async function BlogIdPage({
         </div>
       )}
 
-      {/* 本文（リッチテキスト表示） */}
+      {/* 本文表示（加工なし・直球） */}
       <div 
         className="
           prose prose-sm md:prose-base max-w-none font-mono
           prose-headings:font-black 
-          prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-black prose-h2:pl-4 prose-h2:leading-snug
-          prose-h3:mt-8 prose-h3:text-lg
+          prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-black prose-h2:pl-4
           prose-a:text-black prose-a:underline prose-a:decoration-1 prose-a:underline-offset-4 hover:prose-a:opacity-50
-          prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-500
+          prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic
         "
-        dangerouslySetInnerHTML={{ __html: processedContent }} 
+        dangerouslySetInnerHTML={{ __html: blog.body }} 
       />
 
       {/* フッター */}
@@ -85,12 +95,4 @@ export default async function BlogIdPage({
       </div>
     </div>
   );
-}
-
-// 静的生成の設定（必要に応じて）
-export async function generateStaticParams() {
-  const { contents } = await client.get({ endpoint: 'blogs' });
-  return contents.map((blog: any) => ({
-    id: blog.id,
-  }));
 }
