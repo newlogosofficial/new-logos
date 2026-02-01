@@ -2,34 +2,38 @@ import Link from 'next/link';
 import { client } from '@/libs/client';
 import BlogCard from '@/components/BlogCard';
 
+/* ▼ Next.js 15対応: searchParamsをPromiseとして定義 */
 export default async function BlogsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string; sort?: string; page?: string };
+  searchParams: Promise<{ q?: string; category?: string; sort?: string; page?: string }>;
 }) {
-  const { q, category, sort, page } = searchParams;
+  // ★ここでawaitしてパラメータを確定させる（これでボタンの色が変わるようになります）
+  const { q, category, sort, page } = await searchParams;
   
   const currentPage = parseInt(page || '1', 10);
   const limit = 10;
   const offset = (currentPage - 1) * limit;
 
-  // ▼ ここを修正：並べ替えロジック
+  // microCMSへのクエリ作成
   const queries: any = { limit, offset };
   
   if (q) queries.q = q;
   if (category) queries.filters = `category[equals]${category}`;
 
-  // ソート順の指定（microCMSの仕様に合わせる）
+  // ソート順のロジック
   if (sort === 'oldest') {
-    queries.orders = 'publishedAt'; // 古い順（昇順）
+    queries.orders = 'publishedAt'; // 古い順
   } else {
-    queries.orders = '-publishedAt'; // 新しい順（降順・デフォルト）
+    // デフォルト または latest または popular
+    queries.orders = '-publishedAt'; // 新しい順
   }
-  
-  // ※「人気順(popular)」はDB未連携のため、現状は「新しい順」と同じ動作になります
   
   const { contents, totalCount } = await client.get({ endpoint: 'blogs', queries });
   const totalPages = Math.ceil(totalCount / limit);
+
+  // 現在のソート状態（ボタンの色変え用）
+  const currentSort = sort || 'latest';
 
   return (
     <div className="w-full">
@@ -39,14 +43,35 @@ export default async function BlogsPage({
           <p className="text-xs font-mono text-gray-500 mt-2">ALL RECORDS OF THOUGHTS</p>
         </div>
 
+        {/* 並べ替えボタンエリア */}
         <div className="flex gap-2 text-xs font-bold font-mono">
-          <Link href="/blogs?sort=popular" className={`px-3 py-1 border border-black ${sort === 'popular' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}>POPULAR</Link>
-          <Link href="/blogs" className={`px-3 py-1 border border-black ${!sort ? 'bg-black text-white' : 'hover:bg-gray-100'}`}>LATEST</Link>
-          <Link href="/blogs?sort=oldest" className={`px-3 py-1 border border-black ${sort === 'oldest' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}>OLDEST</Link>
+          {/* 人気順（今はまだ機能がないので見た目だけ。動きは最新順と同じ） */}
+          <Link 
+            href="/blogs?sort=popular" 
+            className={`px-3 py-1 border border-black transition-colors ${currentSort === 'popular' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+          >
+            POPULAR
+          </Link>
+
+          {/* 最新順 */}
+          <Link 
+            href="/blogs?sort=latest" 
+            className={`px-3 py-1 border border-black transition-colors ${currentSort === 'latest' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+          >
+            LATEST
+          </Link>
+
+          {/* 古い順 */}
+          <Link 
+            href="/blogs?sort=oldest" 
+            className={`px-3 py-1 border border-black transition-colors ${currentSort === 'oldest' ? 'bg-black text-white' : 'hover:bg-gray-100'}`}
+          >
+            OLDEST
+          </Link>
         </div>
       </header>
 
-      {/* ... (カテゴリ・記事リスト・ページネーションは変更なし) ... */}
+      {/* 記事リスト */}
        <div className="space-y-4 min-h-[50vh]">
         {contents.length === 0 ? (
           <p className="text-center py-20 font-mono text-gray-400">NO LOGIC FOUND.</p>
