@@ -3,8 +3,10 @@ import { notFound } from 'next/navigation';
 import { client } from '@/libs/client';
 import * as cheerio from 'cheerio';
 import NewLike from '@/components/NewLikeButton'; 
+// 新しく作ったコンポーネントを読み込み
+import ShareSection from '@/components/ShareSection';
 
-// 常に最新データを取得（カウント数を正確に反映するため）
+// 常に最新データを取得
 export const revalidate = 0;
 
 export default async function BlogIdPage({
@@ -25,6 +27,7 @@ export default async function BlogIdPage({
     notFound();
   }
 
+  // HTML解析とID付与
   const rawHtml = blog.body || blog.content;
   const $ = cheerio.load(rawHtml || '', null, false);
   $('h2').each((_, elm) => {
@@ -40,15 +43,25 @@ export default async function BlogIdPage({
   }).replace(/\//g, '.');
 
   return (
-    <div className="max-w-3xl mx-auto w-full">
+    <div className="max-w-3xl mx-auto w-full px-6 py-12">
       <header className="mb-12 border-b border-black pb-8">
+        {/* カテゴリ表示（文字列・オブジェクト両対応に修正） */}
         <div className="flex flex-wrap gap-2 mb-4">
-          {blog.category && blog.category.map((cat: any) => (
-            <span key={cat.id} className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase">
-              {cat.name}
-            </span>
-          ))}
+          {blog.category && blog.category.length > 0 ? (
+            blog.category.map((cat: any, index: number) => {
+              // 文字列ならそのまま、オブジェクトなら.nameを使う
+              const catName = typeof cat === 'string' ? cat : cat.name;
+              return (
+                <span key={index} className="bg-black text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider">
+                  {catName}
+                </span>
+              );
+            })
+          ) : (
+             <span className="text-[10px] font-bold text-gray-300 uppercase tracking-wide">-</span>
+          )}
         </div>
+        
         <h1 className="text-2xl md:text-4xl font-black tracking-tight leading-tight mb-4 uppercase">
           {blog.title}
         </h1>
@@ -61,6 +74,7 @@ export default async function BlogIdPage({
         </div>
       )}
 
+      {/* 本文 */}
       <div 
         className="
           prose prose-sm md:prose-base max-w-none font-mono
@@ -72,12 +86,15 @@ export default async function BlogIdPage({
         dangerouslySetInnerHTML={{ __html: processedContent }} 
       />
 
+      {/* いいねボタン */}
       <div className="mt-16 flex justify-center">
-        {/* ■ 修正点：現在のいいね数（なければ0）を渡す */}
         <NewLike blogId={id} initialCount={blog.likes || 0} />
       </div>
 
-      <div className="mt-20 pt-10 border-t border-black flex justify-between items-center">
+      {/* ■ 追加：シェア & 訂正提案セクション */}
+      <ShareSection id={id} title={blog.title} />
+
+      <div className="mt-8 pt-10 flex justify-between items-center">
         <Link href="/blogs" className="text-xs font-bold font-mono border border-black px-4 py-2 hover:bg-black hover:text-white transition-colors">
           &lt; BACK TO ARCHIVE
         </Link>
