@@ -3,25 +3,39 @@
 import { useState, useEffect } from 'react';
 
 export default function BootOpener() {
+  const [show, setShow] = useState(false);
   const [stage, setStage] = useState(0); // 0:Init, 1:Text, 2:Sub, 3:Finish
 
   useEffect(() => {
-    // ステップ実行: ブリンク -> 日本語 -> 英語 -> フェードアウト
-    const timer1 = setTimeout(() => setStage(1), 800);
-    const timer2 = setTimeout(() => setStage(2), 1800);
-    const timer3 = setTimeout(() => setStage(3), 3500);
+    // 1. ブラウザのセッションストレージを確認
+    const hasSeen = sessionStorage.getItem('hasSeenBoot');
 
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      clearTimeout(timer3);
-    };
+    // 2. まだ見ていない場合のみアニメーションを開始
+    if (!hasSeen) {
+      setShow(true);
+      sessionStorage.setItem('hasSeenBoot', 'true'); // 「見た」と記録
+
+      // アニメーションのステップ実行
+      const timer1 = setTimeout(() => setStage(1), 800);  // 日本語表示
+      const timer2 = setTimeout(() => setStage(2), 1800); // 英語表示
+      const timer3 = setTimeout(() => {
+        setStage(3);  // 完了状態へ
+        setTimeout(() => setShow(false), 1000); // フェードアウト後にDOMから削除
+      }, 3500);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
+    }
   }, []);
 
-  if (stage === 3) return null; // アニメーション終了後はDOMから消滅
+  // 表示フラグがfalseなら何も描画しない（完全にスキップ）
+  if (!show) return null;
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-white transition-opacity duration-1000 ${stage === 3 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+    <div className={`fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white transition-opacity duration-1000 ${stage === 3 ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
       <div className="font-mono text-black text-center px-4">
         {/* カーソル点滅演出 */}
         <div className="mb-4 text-sm animate-pulse">_initializing_logos</div>
