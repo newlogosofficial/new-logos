@@ -12,15 +12,29 @@ export default function AccessPage() {
         <section>
           <h2 className="text-sm font-bold border-l-4 border-black pl-3 mb-6">OFFICIAL CHANNELS</h2>
           <div className="flex flex-col gap-4">
+            {/* YouTube */}
             <a href="https://www.youtube.com/@NewLogos" target="_blank" className="group flex items-center justify-between border border-black p-4 hover:bg-black hover:text-white transition-colors">
               <span className="font-bold">YouTube</span>
               <span className="text-xs font-mono opacity-50 group-hover:opacity-100">@NewLogos</span>
             </a>
+            
+            {/* X (Twitter) */}
             <a href="https://x.com/NewLogos_Axis" target="_blank" className="group flex items-center justify-between border border-black p-4 hover:bg-black hover:text-white transition-colors">
               <span className="font-bold">X (Twitter)</span>
               <span className="text-xs font-mono opacity-50 group-hover:opacity-100">@NewLogos_Axis</span>
             </a>
-            {/* ... Instagramなども必要ならここに追加 ... */}
+
+            {/* TikTok (追加) */}
+            <a href="https://www.tiktok.com/@newlogos_axis" target="_blank" className="group flex items-center justify-between border border-black p-4 hover:bg-black hover:text-white transition-colors">
+              <span className="font-bold">TikTok</span>
+              <span className="text-xs font-mono opacity-50 group-hover:opacity-100">@newlogos_axis</span>
+            </a>
+
+            {/* Instagram (追加) */}
+            <a href="https://www.instagram.com/newlogos_axis" target="_blank" className="group flex items-center justify-between border border-black p-4 hover:bg-black hover:text-white transition-colors">
+              <span className="font-bold">Instagram</span>
+              <span className="text-xs font-mono opacity-50 group-hover:opacity-100">@newlogos_axis</span>
+            </a>
           </div>
         </section>
 
@@ -30,7 +44,6 @@ export default function AccessPage() {
             <p>
               NewLogosへの取材、コラボレーションの依頼、または記事内容に関する訂正報告は以下のメールアドレスまでご連絡ください。
             </p>
-            {/* ▼ メールアドレス変更 */}
             <div className="bg-gray-100 p-4 font-mono text-center select-all">
               newlogos.official@gmail.com
             </div>
