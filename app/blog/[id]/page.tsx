@@ -31,8 +31,10 @@ export default async function BlogPage({ params }: Props) {
 
         {/* 本文 (HTMLとしてレンダリング) */}
         <div 
-          className="prose prose-neutral max-w-none prose-h2:text-xl prose-h2:border-l-4 prose-h2:border-black prose-h2:pl-3 prose-h2:mt-12 prose-p:leading-8 prose-p:text-gray-800"
-          dangerouslySetInnerHTML={{ __html: blog.body }} // microCMSの本文フィールド名に合わせてください
+          className="prose prose-neutral max-w-none ..."
+          dangerouslySetInnerHTML={{ 
+            __html: (typeof blog.body === 'string') ? blog.body : "" 
+          }} 
         />
 
         {/* インタラクション（NewLike, Share, Report） */}
