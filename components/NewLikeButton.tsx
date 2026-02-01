@@ -2,12 +2,20 @@
 
 import { useState, useEffect } from 'react';
 
-export default function NewLikeButton({ blogId }: { blogId: string }) {
+// initialCountを受け取れるように型定義を追加
+export default function NewLikeButton({ 
+  blogId, 
+  initialCount 
+}: { 
+  blogId: string;
+  initialCount: number;
+}) {
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(false);
+  // 初期値をサーバーから受け取った数字に設定
+  const [count, setCount] = useState(initialCount);
 
   useEffect(() => {
-    // 過去に押したかチェック
     const isLiked = localStorage.getItem(`like-${blogId}`);
     if (isLiked) {
       setLiked(true);
@@ -15,12 +23,15 @@ export default function NewLikeButton({ blogId }: { blogId: string }) {
   }, [blogId]);
 
   const handleLike = async () => {
-    if (liked || loading) return; // 連打防止
+    if (liked || loading) return;
 
     setLoading(true);
 
+    // 楽観的UI更新（APIを待たずに先に数字を増やしてユーザー体験を良くする）
+    setCount((prev) => prev + 1);
+    setLiked(true);
+
     try {
-      // さっき作った裏方の窓口に「+1して」と依頼
       const res = await fetch('/api/likes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,13 +42,17 @@ export default function NewLikeButton({ blogId }: { blogId: string }) {
         throw new Error('API Error');
       }
 
-      // 成功したら見た目を「押した状態」にする
-      setLiked(true);
+      // APIから正確な現在値が返ってきたらそれで上書きしてもよい
+      // const data = await res.json();
+      // setCount(data.count);
+      
       localStorage.setItem(`like-${blogId}`, 'true');
       
     } catch (error) {
       console.error('Like failed:', error);
-      alert('通信エラーが発生しました。時間を置いて再度お試しください。');
+      // エラー時は元に戻す
+      setCount((prev) => prev - 1);
+      setLiked(false);
     } finally {
       setLoading(false);
     }
@@ -48,19 +63,25 @@ export default function NewLikeButton({ blogId }: { blogId: string }) {
       onClick={handleLike}
       disabled={liked || loading}
       className={`
-        group relative flex items-center gap-3 px-6 py-3 border transition-all duration-300
+        group relative flex items-center gap-4 px-8 py-4 border-2 transition-all duration-300
         ${liked 
           ? 'bg-black text-white border-black cursor-default' 
-          : 'bg-white text-black border-black hover:bg-gray-100'
+          : 'bg-white text-black border-black hover:bg-black hover:text-white'
         }
       `}
     >
-      <span className="text-sm font-bold font-mono tracking-widest">
-        {loading ? 'SENDING...' : (liked ? 'ACKNOWLEDGED' : 'RESPECT')}
-      </span>
+      <div className="flex flex-col items-start leading-none">
+        <span className="text-[10px] font-bold tracking-widest opacity-60 mb-1">
+          {liked ? 'CONFIRMED' : 'CLICK TO'}
+        </span>
+        <span className="text-xl font-black font-mono tracking-tighter">
+          NEWLIKE <span className="ml-1 text-lg">{count}</span>
+        </span>
+      </div>
+
       <div className={`
-        w-2 h-2 bg-current transition-transform duration-300
-        ${liked ? 'rotate-45' : 'group-hover:rotate-180'}
+        w-3 h-3 bg-current transition-transform duration-500
+        ${liked ? 'rotate-45' : 'group-hover:rotate-90'}
       `} />
     </button>
   );

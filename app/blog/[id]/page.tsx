@@ -2,10 +2,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { client } from '@/libs/client';
 import * as cheerio from 'cheerio';
-// NewLikeButtonを読み込み
 import NewLike from '@/components/NewLikeButton'; 
 
-// キャッシュ無効化
+// 常に最新データを取得（カウント数を正確に反映するため）
 export const revalidate = 0;
 
 export default async function BlogIdPage({
@@ -26,7 +25,6 @@ export default async function BlogIdPage({
     notFound();
   }
 
-  // HTML解析とID付与
   const rawHtml = blog.body || blog.content;
   const $ = cheerio.load(rawHtml || '', null, false);
   $('h2').each((_, elm) => {
@@ -63,7 +61,6 @@ export default async function BlogIdPage({
         </div>
       )}
 
-      {/* 本文 */}
       <div 
         className="
           prose prose-sm md:prose-base max-w-none font-mono
@@ -75,9 +72,9 @@ export default async function BlogIdPage({
         dangerouslySetInnerHTML={{ __html: processedContent }} 
       />
 
-      {/* ★修正箇所：プロパティ名を blogId に変更 */}
       <div className="mt-16 flex justify-center">
-        <NewLike blogId={id} />
+        {/* ■ 修正点：現在のいいね数（なければ0）を渡す */}
+        <NewLike blogId={id} initialCount={blog.likes || 0} />
       </div>
 
       <div className="mt-20 pt-10 border-t border-black flex justify-between items-center">
