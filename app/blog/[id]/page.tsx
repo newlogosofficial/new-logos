@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { client } from '@/libs/client';
-import * as cheerio from 'cheerio'; // HTML解析用
+import * as cheerio from 'cheerio';
 
 export default async function BlogIdPage({
   params,
@@ -17,24 +17,18 @@ export default async function BlogIdPage({
     notFound();
   }
 
-  // ■ ここが新しい論理（HTML処理）
-  // 1. 本文を取得（リッチエディタの場合は HTML が来る）
+  // HTMLを取得
   const rawHtml = blog.content || blog.body;
 
-  // 2. Cheerioを使ってHTMLを読み込む
-  const $ = cheerio.load(rawHtml || '');
-
-  // 3. すべての h2 タグを探し、その中身のテキストを id に設定する
-  // これにより、目次のリンク（#はじめに 等）が機能するようになる
+  // HTMLを解析して、見出し(h2)にIDを自動付与する
+  const $ = cheerio.load(rawHtml || '', null, false);
   $('h2').each((_, elm) => {
     const text = $(elm).text();
-    // スペースなどを安全な文字に変換してもいいが、今回はシンプルにテキストをそのままIDに
-    $(elm).attr('id', text); 
+    $(elm).attr('id', text); // 見出しの文字をそのままIDにする
   });
+  const processedContent = $.html();
 
-  // 4. 処理済みのHTMLを取り出す
-  const content = $.html();
-
+  // 日付フォーマット
   const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
     year: 'numeric',
     month: '2-digit',
@@ -69,16 +63,17 @@ export default async function BlogIdPage({
         </div>
       )}
 
-      {/* ■ 本文表示エリア（リッチテキスト用） */}
+      {/* 本文（リッチテキスト表示） */}
       <div 
         className="
           prose prose-sm md:prose-base max-w-none font-mono
           prose-headings:font-black 
-          prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-black prose-h2:pl-4
+          prose-h2:mt-12 prose-h2:mb-6 prose-h2:text-2xl prose-h2:border-l-4 prose-h2:border-black prose-h2:pl-4 prose-h2:leading-snug
+          prose-h3:mt-8 prose-h3:text-lg
           prose-a:text-black prose-a:underline prose-a:decoration-1 prose-a:underline-offset-4 hover:prose-a:opacity-50
-          prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic
+          prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-500
         "
-        dangerouslySetInnerHTML={{ __html: content }} 
+        dangerouslySetInnerHTML={{ __html: processedContent }} 
       />
 
       {/* フッター */}
@@ -92,6 +87,7 @@ export default async function BlogIdPage({
   );
 }
 
+// 静的生成の設定（必要に応じて）
 export async function generateStaticParams() {
   const { contents } = await client.get({ endpoint: 'blogs' });
   return contents.map((blog: any) => ({
