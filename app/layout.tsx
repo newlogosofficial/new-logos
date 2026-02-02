@@ -9,11 +9,37 @@ const notoSansJP = Noto_Sans_JP({
   weight: ["400", "700", "900"],
 });
 
-/* タイトル設定等はそのまま... */
+/* メタデータ設定（OGP追加版） */
 export const metadata: Metadata = {
+  // ★重要: ここを自分の実際の公開ドメインに書き換えてください
+  metadataBase: new URL('https://new-logos.vercel.app'),
+
   title: { template: '%s | NEW LOGOS', default: 'NEW LOGOS' },
   description: "Logic / Structure / Possibility",
   icons: { icon: '/icon.png', shortcut: '/icon.png', apple: '/icon.png' },
+
+  // ▼▼▼ 追加：SNSシェア用設定 (Open Graph) ▼▼▼
+  openGraph: {
+    title: 'NEW LOGOS',
+    description: 'Logic / Structure / Possibility',
+    url: '/',
+    siteName: 'NEW LOGOS',
+    locale: 'ja_JP',
+    type: 'website',
+    // デフォルト画像（記事に画像がない場合やトップページで表示されます）
+    // publicフォルダにある icon.png を指定していますが、専用の default-ogp.png などを作ってもOKです
+    images: ['/icon.png'],
+  },
+
+  // ▼▼▼ 追加：Twitter用設定 ▼▼▼
+  twitter: {
+    card: 'summary_large_image', // 画像を大きく表示する設定
+    title: 'NEW LOGOS',
+    description: 'Logic / Structure / Possibility',
+    // 必要であれば自分のTwitter IDを設定
+    // site: '@NewLogos_Axis',
+    images: ['/icon.png'],
+  },
 };
 
 export default function RootLayout({
